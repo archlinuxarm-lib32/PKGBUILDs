@@ -1,0 +1,112 @@
+# Contributor: Alexander 'hatred' Drozdov <adrozdoff@gmail.com>
+# Contributor: toha257 <toha257@gmail.com>
+# Contributor: Allan McRae <allan@archlinux.org>
+# Contributor: Bartłomiej Piotrowski <bpiotrowski@archlinux.org>
+# Contributor: Kevin Mihelich <kevin@archlinuxarm.org>
+# Contributor: Felipe Balbi <felipe@balbi.sh>
+# Maintainer: Tavian Barnes <tavianator@tavianator.com>
+
+_target="armv7l-linux-gnueabihf"
+pkgname=lib32-binutils
+pkgver=2.44
+pkgrel=1
+pkgdesc="A set of programs to assemble and manipulate binary and object files (${_target})"
+arch=(aarch64 armv7h i686 x86_64)
+url='https://www.gnu.org/software/binutils/'
+license=(GPL)
+depends=(glibc zlib elfutils)
+# makedepends=('elfutils')
+options=(staticlibs !distcc !ccache)
+# source=(https://ftp.gnu.org/gnu/binutils/binutils-$pkgver.tar.xz)
+source=(https://ftpmirror.gnu.org/gnu/binutils/binutils-$pkgver.tar.xz
+        binutils-patch-scriptdir-lib32.patch)
+sha256sums=('ce2017e059d63e67ddb9240e9d4ec49c2893605035cd60e92ad53177f4377237'
+            'c350ed9c893b78f5ab07dc7243c4cdb16bc7cfc5e2395ccd3af84a5a80d82ebb')
+
+prepare() {
+  mkdir -p binutils-build
+
+  # cd binutils-gdb
+  cd binutils-$pkgver
+
+  # Turn off development mode (-Werror, gas run-time checks, date in sonames)
+  sed -i '/^development=/s/true/false/' bfd/development.sh
+
+  # hack! - libiberty configure tests for header files using "$CPP $CPPFLAGS"
+  sed -i "/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/" libiberty/configure
+  patch -Np1 < ../binutils-patch-scriptdir-lib32.patch
+  # patch -Np1 -i ../binutils-cb5f6a3e146cc70bc2d864989386df80acec5d3e.patch
+}
+
+build() {
+  cd binutils-build
+  CFLAGS=${CFLAGS/-Werror=format-security/}
+  CXXFLAGS=${CXXFLAGS/-Werror=format-security/}
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+  export OBJDUMP=armv7l-linux-gnueabihf-objdump
+  export OBJDUMP_FOR_TARGET=armv7l-linux-gnueabihf-objdump
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"                                          
+  #export LDFLAGS+=" -L/usr/lib32 -Wl,-rpath=/usr/lib32 -Wl,-rpath-link=/usr/lib32"     
+  "$srcdir/binutils-$pkgver/configure" \
+      --prefix=/usr \
+      --includedir=/usr/include32 \
+      --libdir=/usr/lib32 \
+      --with-sysroot=/ \
+      --with-native-system-header-dir=/include32 \
+      --libexecdir=/usr/lib32 \
+      --oldincludedir=/usr/include32 \
+      --with-native-system-header-dir=/include32 \
+      --program-prefix=${_target}- \
+      --enable-colored-disassembly \
+      --enable-deterministic-archives \
+      --enable-gold \
+      --enable-ld=default \
+      --enable-lto \
+      --enable-plugins \
+      --enable-relro \
+      --disable-shared \
+      --enable-threads \
+      --disable-gdb \
+      --disable-werror \
+      --with-pic \
+      --with-system-zlib \
+      --disable-sim \
+      --target=armv7l-linux-gnueabihf \
+      --host=armv7l-linux-gnueabihf \
+      --build=armv7l-linux-gnueabihf
+
+  make configure-host
+  make -O tooldir=/usr
+}
+
+package() {
+  cd binutils-build
+  make DESTDIR="${pkgdir}" tooldir=/usr install
+
+  # Remove unwanted files
+  rm -rf "$pkgdir/usr/share"
+  rm -f "$pkgdir/usr/bin/"{ar,as,ld,nm,objdump,ranlib,readelf,strip,objcopy}
+  for i in as \
+           ar \
+           addr2line \
+           ld \
+           nm \
+           objdump \
+           ranlib \
+           readelf \
+           strip \
+           objcopy \
+           c++filt \
+           elfedit \
+           gprof \
+           ld.bfd \
+           size \
+           strings; do
+    ln -s /usr/bin/armv7l-linux-gnueabihf-${i} "$pkgdir/usr/bin"/armv7l-unknown-linux-gnueabihf-${i}
+  done
+
+
+}

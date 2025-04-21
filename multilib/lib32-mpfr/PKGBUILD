@@ -1,0 +1,78 @@
+# Maintainer: David Runge <dvzrv@archlinux.org>
+# Maintainer: Antonio Rojas <arojas@archlinux.org>
+# Contributor: Allan McRae <allan@archlinux.org>
+# Contributor: damir <damir@archlinux.org>
+
+pkgname=lib32-mpfr
+_pkgver=4.2.2
+_patchver=0
+if (( _patchver == 0 )); then
+  pkgver=$_pkgver
+else
+  pkgver=$_pkgver.p$_patchver
+fi
+pkgrel=1
+pkgdesc='Multiple-precision floating-point library'
+arch=(x86_64)
+url='https://www.mpfr.org/'
+license=(
+  GPL-3.0-or-later
+  LGPL-3.0-or-later
+)
+depends=(
+  lib32-glibc
+  lib32-gmp
+)
+# NOTE: download potentially existing patches from upstream:
+# `curl patches.diff -o https://www.mpfr.org/mpfr-${_pkgver}/allpatches`
+source=(https://ftp.gnu.org/gnu/mpfr/mpfr-$_pkgver.tar.xz)
+sha512sums=('eb9e7f51b5385fb349cc4fba3a45ffdf0dd53be6dfc74932dc01258158a10514667960c530c47dd9dfc5aa18be2bd94859d80499844c5713710581e6ac6259a9'
+            )
+b2sums=('6bbf5658e70fbb673a3b65246a6bac708d1571aa6943c6742efd92f468ac71e6f0fe351b757f7133440ea312d9a5fc3549acd89d54f4d975c58bdc204d7b21ec'
+        )
+
+prepare() {
+  cd mpfr-${_pkgver}
+
+  for src in "${source[@]}"; do
+    [[ "$src" == *.diff ]] || [[ "$src" == *.patch ]] || continue
+    printf "Applying patch %s...\n" "$src"
+    patch -Np1 -i "../$src"
+  done
+
+  autoreconf -fiv
+}
+
+build() {
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+  cd mpfr-${_pkgver}
+  ./configure --prefix=/usr \
+    --libexecdir=/usr/lib32 \
+    --libdir=/usr/lib32 \
+    --target=armv7l-linux-gnueabihf \
+    --host=armv7l-linux-gnueabihf \
+    --build=armv7l-linux-gnueabihf \
+    --includedir=/usr/include32 \
+    --enable-thread-safe \
+    --enable-shared
+  make
+}
+
+check() {
+  cd mpfr-${_pkgver}
+  make check
+  make check-exported-symbols
+}
+
+package() {
+  cd mpfr-${_pkgver}
+  make DESTDIR="$pkgdir" install
+  rm -rf "$pkgdir"/usr/share
+}

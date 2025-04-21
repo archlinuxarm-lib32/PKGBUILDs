@@ -1,0 +1,54 @@
+# Maintainer: Florian Pritz <bluewind@xinu.at>
+# Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Contributor: josephgbr <rafael.f.f1@gmail.com>
+
+_pkgbasename=gmp
+pkgname=lib32-$_pkgbasename
+pkgver=6.3.0
+pkgrel=2
+pkgdesc="A free library for arbitrary precision arithmetic (32-bit)"
+arch=('x86_64')
+url="https://gmplib.org/"
+depends=($_pkgbasename)
+license=('LGPL3' 'GPL')
+source=(https://gmplib.org/download/gmp/gmp-${pkgver}.tar.lz)
+sha512sums=('b70f3603ab40270fa6e9a7ee1dc0f91477e45803d3ee2f22af924af89dcd18b483c900685310c9e69cee91dc1b6dec00cfec6a8a111022d0122b5427209a4a2d'
+            )
+
+build() {
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+
+  cd "${_pkgbasename}-${pkgver}"
+
+  ./configure \
+    --prefix=/usr \
+    --libexecdir=/usr/lib32 \
+    --target=armv7l-linux-gnueabihf \
+    --host=armv7l-linux-gnueabihf \
+    --build=armv7l-linux-gnueabihf \
+    --enable-fat --enable-cxx --libdir=/usr/lib32 \
+    --includedir=/usr/include32
+
+  #Put gmp.h in the same folder as gmpxx.h
+  sed -i 's/$(exec_prefix)\/include/$\(includedir\)/' Makefile
+
+  make
+}
+
+check() {
+  cd "${_pkgbasename}-${pkgver}"
+  make check
+}
+
+package() {
+  cd "${_pkgbasename}-${pkgver}"
+  make DESTDIR="${pkgdir}" install
+  
+  rm -rf "${pkgdir}"/usr/{share,bin}
+}

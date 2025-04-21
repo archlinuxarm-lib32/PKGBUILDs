@@ -1,0 +1,51 @@
+diff --git a/config/gcc-plugin.m4 b/config/gcc-plugin.m4
+index c30cfdd8fad..5c59bdddc28 100644
+--- a/config/gcc-plugin.m4
++++ b/config/gcc-plugin.m4
+@@ -47,7 +47,11 @@ AC_DEFUN([GCC_ENABLE_PLUGINS],
+        if test x$build = x$host; then
+ 	 export_sym_check="$ac_cv_prog_OBJDUMP -T"
+        elif test x$host = x$target; then
+-	 export_sym_check="$gcc_cv_objdump -T"
++         if test x$gcc_cv_objdump != x; then
++          export_sym_check="$gcc_cv_objdump -T"
++         else
++          export_sym_check="$ac_cv_prog_OBJDUMP -T"
++         fi
+        else
+ 	 export_sym_check="$ac_cv_prog_OBJDUMP -T"
+        fi
+diff --git a/gcc/configure b/gcc/configure
+index b4c52de6218..d69eb1746a6 100755
+--- a/gcc/configure
++++ b/gcc/configure
+@@ -34106,7 +34106,11 @@ fi
+        if test x$build = x$host; then
+ 	 export_sym_check="$ac_cv_prog_OBJDUMP -T"
+        elif test x$host = x$target; then
+-	 export_sym_check="$gcc_cv_objdump -T"
++         if test x$gcc_cv_objdump != x; then
++          export_sym_check="$gcc_cv_objdump -T"
++         else
++          export_sym_check="$ac_cv_prog_OBJDUMP -T"
++         fi
+        else
+ 	 export_sym_check="$ac_cv_prog_OBJDUMP -T"
+        fi
+diff --git a/libcc1/configure b/libcc1/configure
+index ea689a353c8..82fc9674543 100755
+--- a/libcc1/configure
++++ b/libcc1/configure
+@@ -15220,7 +15220,11 @@ fi
+        if test x$build = x$host; then
+ 	 export_sym_check="$ac_cv_prog_OBJDUMP -T"
+        elif test x$host = x$target; then
+-	 export_sym_check="$gcc_cv_objdump -T"
++         if test x$gcc_cv_objdump != x; then
++          export_sym_check="$gcc_cv_objdump -T"
++         else
++          export_sym_check="$ac_cv_prog_OBJDUMP -T"
++         fi
+        else
+ 	 export_sym_check="$ac_cv_prog_OBJDUMP -T"
+        fi

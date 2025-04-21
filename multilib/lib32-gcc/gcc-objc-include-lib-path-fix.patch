@@ -1,0 +1,39 @@
+diff --git a/libobjc/Makefile.in b/libobjc/Makefile.in
+index 58d0638f7..cd7bd7924 100644
+--- a/libobjc/Makefile.in
++++ b/libobjc/Makefile.in
+@@ -47,7 +47,7 @@ extra_ldflags_libobjc = @extra_ldflags_libobjc@
+ 
+ top_builddir = .
+ 
+-libdir = $(exec_prefix)/lib
++libdir = @libdir@
+ libsubdir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_version)
+ 
+ # Multilib support variables.
+diff --git a/libobjc/configure b/libobjc/configure
+index 681725491..7c9cc6eb5 100755
+--- a/libobjc/configure
++++ b/libobjc/configure
+@@ -2568,7 +2568,7 @@ esac
+ 
+ # Figure out if we want to name the include directory and the
+ #  library name changes differently.
+-includedirname=include
++includedirname=`basename $(includedir)`
+ libsuffix=
+ case "${host}" in
+   *-darwin*)
+diff --git a/libobjc/configure.ac b/libobjc/configure.ac
+index a04419081..2f670a9b5 100644
+--- a/libobjc/configure.ac
++++ b/libobjc/configure.ac
+@@ -118,7 +118,7 @@ AC_SUBST(toolexeclibdir)
+ 
+ # Figure out if we want to name the include directory and the
+ #  library name changes differently.
+-includedirname=include
++  includedirname=`basename $(includedir)`
+ libsuffix=
+ case "${host}" in
+   *-darwin*)
