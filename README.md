@@ -5,7 +5,7 @@ This is a repo of lib32 multilib packages for ArchLinux ARM.
 Well though many people claimed that armv7l to aarch64 are not like i386 to amd64, for end users they're very similiar. You can run armv7l bianries on aarch64 platforms(except for some ARMv9 platforms), and why not?
 
 ## Current status
-It's very experimental now and should be used in production environment.
+It's very experimental now and shouldn't be used in production environment.
 Due to the header difference between arm and aarch64(gcc treated them like two different architecture), it's not possible to store arm headers under `/usr/include`.
 So in every lib32 package, there are:
 
