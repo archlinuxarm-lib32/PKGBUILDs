@@ -1,0 +1,62 @@
+# Maintainer: Bart De Vries <bart at mogwai dot be>
+
+_pkgname=box86
+pkgname=${_pkgname}-git
+pkgver=0.3.8.r14.gd0aad67b
+pkgrel=1
+pkgdesc='Linux Userspace x86 Emulator with a twist'
+arch=('aarch64')
+url='https://github.com/ptitSeb/box86'
+license=('MIT')
+install="box86-git.install"
+depends=('lib32-gcc-libs')
+#optdepends=('')
+makedepends=('git' 'cmake' 'python')
+provides=(box86)
+conflicts=(box86)
+source=("git+https://github.com/ptitSeb/box86.git#branch=master"
+        "box86-git.install"
+        'lib32-toolchain.cmake')
+sha256sums=('SKIP'
+            'ecd38bdad06c256b2655bd4707d7b5248611073f751357424f2fc6327743e299'
+            'SKIP')
+
+pkgver() {
+    cd ${_pkgname}
+    git describe --long --tags | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+    cd ${_pkgname}
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+  export CFLAGS+=' -ffat-lto-objects'
+  export CXXFLAGS+=' -ffat-lto-objects'
+    cmake -B build -S . \
+          -DARM_DYNAREC=ON \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DCMAKE_INSTALL_LIBDIR=lib32 \
+          -DCMAKE_INSTALL_INCLUDEDIR=include32 \
+          -DCMAKE_TOOLCHAIN_FILE=${srcdir}/lib32-toolchain.cmake \
+          -DCMAKE_INSTALL_PREFIX=/usr
+    make -C build
+}
+
+package() {
+    cd ${_pkgname}/build
+    make DESTDIR=${pkgdir} install
+    install -Dm644 ../LICENSE -t "${pkgdir}/usr/share/licenses/${_pkgname}/"
+
+    # Install documentation
+    install -d "${pkgdir}/usr/share/doc/${_pkgname}/"
+    cp -R ../docs/* "${pkgdir}/usr/share/doc/${_pkgname}/"
+
+    find "${pkgdir}"/usr/share/doc/${_pkgname} -type f -exec chmod 0644 {} \;
+    find "${pkgdir}"/usr/share/doc/${_pkgname} -type d -exec chmod 0755 {} \;
+}
+
