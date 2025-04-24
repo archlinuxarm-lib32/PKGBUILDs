@@ -1,0 +1,18 @@
+pkgbase = lib32-libssh2
+	pkgdesc = A library implementing the SSH2 protocol as defined by Internet Drafts (32-bit)
+	pkgver = 1.11.1
+	pkgrel = 1
+	url = https://www.libssh2.org/
+	arch = x86_64
+	license = BSD
+	depends = lib32-openssl
+	depends = lib32-zlib
+	depends = libssh2
+	provides = libssh2.so
+	source = https://www.libssh2.org/download/libssh2-1.11.1.tar.gz
+	source = https://www.libssh2.org/download/libssh2-1.11.1.tar.gz.asc
+	validpgpkeys = 27EDEAF22F3ABCEB50DB9A125CC908FDB71E12C2
+	sha512sums = 8703636fc28f0b12c8171712f3d605e0466a5bb9ba06e136c3203548fc3408ab07defd71dc801d7009a337e1e02fd60e8933a2a526d5ef0ce53153058d201233
+	sha512sums = SKIP
+
+pkgname = lib32-libssh2

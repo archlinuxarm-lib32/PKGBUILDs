@@ -75,4 +75,5 @@ package() {
   cd mpfr-${_pkgver}
   make DESTDIR="$pkgdir" install
   rm -rf "$pkgdir"/usr/share
+  sed -i 's/includedir=${prefix}\/include/includedir=${prefix}\/include32/' "$pkgdir"/usr/lib32/pkgconfig/*
 }

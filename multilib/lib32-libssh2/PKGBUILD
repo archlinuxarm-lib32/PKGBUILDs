@@ -1,0 +1,47 @@
+# Maintainer: Florian Pritz <flo@xssn.at>
+# Contributor: Angel Velasquez <angvp@archlinux.org>
+# Contributor: Sergej Pupykin <pupykin.s+arch@gmail.com>
+# Contributor: Andrea Scarpino <andrea@archlinux.org>
+# Contributor: ice-man <icemanf@gmail.com>
+
+_pkgbasename=libssh2
+pkgname=lib32-$_pkgbasename
+pkgver=1.11.1
+pkgrel=1
+pkgdesc="A library implementing the SSH2 protocol as defined by Internet Drafts (32-bit)"
+url="https://www.libssh2.org/"
+arch=('x86_64')
+license=('BSD')
+depends=('lib32-openssl' 'lib32-zlib' $_pkgbasename)
+provides=('libssh2.so')
+source=("https://www.libssh2.org/download/${_pkgbasename}-${pkgver}.tar.gz"{,.asc})
+validpgpkeys=('27EDEAF22F3ABCEB50DB9A125CC908FDB71E12C2')   # Daniel Stenberg
+sha512sums=('8703636fc28f0b12c8171712f3d605e0466a5bb9ba06e136c3203548fc3408ab07defd71dc801d7009a337e1e02fd60e8933a2a526d5ef0ce53153058d201233'
+            'SKIP')
+
+build() {
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+
+  cd ${_pkgbasename}-${pkgver}
+  ./configure --prefix=/usr --libdir=/usr/lib32 \
+    --target=armv7l-linux-gnueabihf \
+    --host=armv7l-linux-gnueabihf \
+    --build=armv7l-linux-gnueabihf \
+    --includedir=/usr/include32
+  make
+}
+
+package() {
+  cd ${_pkgbasename}-${pkgver}
+  make DESTDIR="${pkgdir}" install
+
+  rm -rf "${pkgdir}"/usr/{share,bin,sbin}
+  mkdir -p "$pkgdir/usr/share/licenses"
+  ln -s $_pkgbasename "$pkgdir/usr/share/licenses/$pkgname"
+}

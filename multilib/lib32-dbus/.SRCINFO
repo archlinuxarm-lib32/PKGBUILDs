@@ -1,0 +1,30 @@
+pkgbase = lib32-dbus
+	pkgdesc = Freedesktop.org message bus system - 32-bit
+	pkgver = 1.16.2
+	pkgrel = 1
+	url = https://www.freedesktop.org/wiki/Software/dbus/
+	arch = x86_64
+	license = AFL-2.1 OR GPL-2.0-or-later
+	makedepends = git
+	makedepends = lib32-glib2
+	makedepends = meson
+	makedepends = python
+	makedepends = systemd
+	depends = dbus
+	depends = lib32-glibc
+	depends = lib32-systemd
+	source = git+https://gitlab.freedesktop.org/dbus/dbus.git?signed#tag=dbus-1.16.2
+	source = 0001-Arch-Linux-tweaks-lib32.patch
+	validpgpkeys = DA98F25C0871C49A59EAFF2C4DE8FF2A63C7CC90
+	b2sums = 669cd4203fbac908db3a20c5b51355d9e84b68c9cc94f8de52e35544a636c6d5d1df8ee2bbdfd6dead53a6bd9865db547aa4af0e913bac697b138c698840d3ce
+	b2sums = 709c45086f60fe0cfb153d4dad585a71ac0dbbb6b3d16c0e3a35bd0cfc9b835511309c62cb35f03cebfc6831661fd5cf9bbdf86b0b14ab92065a00f3317299fe
+
+pkgname = lib32-dbus
+	depends = dbus
+	depends = lib32-glibc
+	depends = lib32-systemd
+	depends = libsystemd.so
+	provides = lib32-libdbus
+	provides = libdbus-1.so
+	conflicts = lib32-libdbus
+	replaces = lib32-libdbus

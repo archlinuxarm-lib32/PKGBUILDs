@@ -1,0 +1,60 @@
+# Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Contributor: Jan Alexander Steffens (heftig) <jan.steffens@gmail.com>
+# Contributor: Allan McRae <allan@archlinux.org>
+# Contributor: Jochem Kossen <j.kossen@home.nl>
+
+_pkgbasename=fakeroot
+pkgname=lib32-${_pkgbasename}
+pkgver=1.37.1.1
+pkgrel=1
+pkgdesc='Tool for simulating superuser privileges (32-bit)'
+arch=('x86_64')
+license=('GPL-3.0-or-later')
+url="https://tracker.debian.org/pkg/fakeroot"
+install=fakeroot.install
+depends=('lib32-glibc' "$_pkgbasename")
+makedepends=('git' 'po4a')
+source=("git+https://salsa.debian.org/clint/fakeroot.git#tag=upstream/${pkgver}")
+sha512sums=('eaade132f843ce9a7d48f802f200e845fe68306f0ba7a5fdffa40c8d996e7162de5d361e4bc1a2e6f43e6d188c15bc683590f9e079ee7203811d3f5321853244')
+prepare() {
+  cd "${_pkgbasename}"
+
+  autoreconf -fi
+}
+
+build() {
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+
+  cd "${_pkgbasename}"
+
+  ./configure \
+    --prefix=/usr \
+    --libexecdir=/usr/lib32 \
+    --target=armv7l-linux-gnueabihf \
+    --includedir=/usr/include32 \
+    --host=armv7l-linux-gnueabihf \
+    --build=armv7l-linux-gnueabihf \
+    --libdir=/usr/lib32/libfakeroot \
+    --disable-static \
+    --with-ipc=sysv
+  make
+
+  cd doc
+  po4a -k 0 --rm-backups --variable "srcdir=../doc/" po4a/po4a.cfg
+}
+
+package() {
+  cd "${_pkgbasename}"
+
+  make DESTDIR="${pkgdir}" install
+  rm -rf "${pkgdir}"/usr/{bin,share}
+
+  install -dm0755 "${pkgdir}/etc/ld.so.conf.d/"
+  echo '/usr/lib32/libfakeroot' > "${pkgdir}/etc/ld.so.conf.d/${pkgname}.conf"
+}

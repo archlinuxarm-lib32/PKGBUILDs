@@ -1,0 +1,77 @@
+# Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
+# Contributor: Florian Pritz <bluewind@xinu.at>
+# Contributor: Christoph Vigano <mail@cvigano.de>
+
+pkgbase=lib32-p11-kit
+pkgname=(
+  lib32-p11-kit
+)
+pkgver=0.25.5
+pkgrel=1
+pkgdesc="Loads and enumerates PKCS#11 modules (32-bit library)"
+url="https://p11-glue.freedesktop.org"
+arch=(x86_64)
+license=(BSD-3-Clause)
+depends=(
+  lib32-glibc
+  lib32-libffi
+  lib32-libtasn1
+  libp11-kit
+)
+makedepends=(
+  lib32-systemd
+  meson
+  systemd
+)
+checkdepends=(
+  lib32-gnutls
+)
+source=(
+  https://github.com/p11-glue/p11-kit/releases/download/$pkgver/p11-kit-$pkgver.tar.xz{,.sig}
+)
+b2sums=('96d6a9c2807586abafae4da4df89f566672733963997d6a83e00aaf83a7a0c0e2995638f505e98fb87a90c60bde28814f1e8b7d5071bf0af96bb0467105a1ddc'
+        'SKIP')
+validpgpkeys=(
+  C0F67099B808FB063E2C81117BFB1108D92765AF  # Stef Walter <stef@thewalter.net>
+  462225C3B46F34879FC8496CD605848ED7E69871  # Daiki Ueno <ueno@unixuser.org>
+  5D46CB0F763405A7053556F47A75A648B3F9220C  # Zoltan Fridrich <zfridric@redhat.com>
+)
+
+prepare() {
+  cd p11-kit-$pkgver
+}
+
+build() {
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+  local meson_options=(
+    -D bash_completion=disabled
+    --libdir /usr/lib32
+    --includedir /usr/include32
+    -D trust_paths=/etc/ca-certificates/trust-source:/usr/share/ca-certificates/trust-source
+  )
+
+  arch-meson p11-kit-$pkgver build "${meson_options[@]}"
+  meson compile -C build
+}
+
+check() {
+  P11TOOL=p11tool-32 meson test -C build --print-errorlogs
+}
+
+package_lib32-p11-kit() {
+  provides=(libp11-kit.so)
+
+  meson install -C build --destdir "$pkgdir"
+
+  rm -r "$pkgdir"/{etc,usr/{bin,lib,share}}
+
+  install -Dt "$pkgdir/usr/share/licenses/$pkgname" -m644 p11-kit-$pkgver/COPYING
+}
+
+# vim:set sw=2 sts=-1 et:

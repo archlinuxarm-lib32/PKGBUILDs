@@ -1,0 +1,81 @@
+# Contributor: Andreas Radke <andyrtr@archlinux.org>
+# Contributor: josephgbr <rafael.f.f1@gmail.com>
+
+pkgname=lib32-icu
+pkgver=76.1
+pkgrel=1
+pkgdesc="International Components for Unicode library (32 bit)"
+arch=(x86_64)
+url="https://icu.unicode.org"
+license=('LicenseRef-Unicode-3.0'
+         'BSD-2-Clause'
+         'BSD-3-Clause'
+         'NAIST-2003')
+depends=('lib32-gcc-libs' 'lib32-glibc' 'icu')
+makedepends=('python')
+source=(https://github.com/unicode-org/icu/releases/download/release-${pkgver//./-}/icu4c-${pkgver//./_}-src.tgz{,.asc}
+        ICU-22132.patch
+        icudata-stdlibs.patch
+        LICENSE)
+# https://github.com/unicode-org/icu/releases/download/release-76-1/SHASUM512.txt
+sha512sums=('b702ab62fb37a1574d5f4a768326d0f8fa30d9db5b015605b5f8215b5d8547f83d84880c586d3dcc7b6c76f8d47ef34e04b0f51baa55908f737024dd79a42a6c'
+            'SKIP'
+            '1178062ccfcf7ecc698c64132b3612e73f9c4b0bbfaa668ae2039f3eb4cb2722d0b08a9f45b057da10def7a308d5c8d14c0c644892e7f11092c9cc488c850ab7'
+            'SKIP'
+            'c1c3b2deaf2aeb1d90c1ca85d57db921e140e5087c1eba579dabaca94568a840a0e105145b8016f3b7269216ddc1b0ac56e1d5d1753129a99367e51e2080a6b0')
+validpgpkeys=('E52F07877A5805F9AF4AB0ACD46C5610D06E7001') # ICU Release Robot <icu-robot@unicode.org>
+
+prepare() {
+  cd icu/source
+  # Required fix for thunderbird 115 to show Calendar and sidebar properly
+  # https://bugzilla.mozilla.org/show_bug.cgi?id=1843007
+  # https://unicode-org.atlassian.net/browse/ICU-22132
+  patch -Np1 < "../../ICU-22132.patch"
+  patch -Np2 < ${srcdir}/icudata-stdlibs.patch
+  sed -r -i 's/(for ac_prog in )clang(\+\+)? /\1/g' configure
+}
+
+build() {
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+
+  # Avoid a test suite failure with GCC 13
+  # https://www.mail-archive.com/debian-bugs-dist@lists.debian.org/msg1936508.html
+  CXXFLAGS+=" -fexcess-precision=fast"
+
+  cd icu/source
+  ./configure --prefix=/usr \
+	--libdir=/usr/lib32 \
+  --includedir=/usr/include32 \
+  --oldincludedir=/usr/include32 \
+  --target=armv7l-linux-gnueabihf \
+  --host=armv7l-linux-gnueabihf \
+  --build=armv7l-linux-gnueabihf \
+	--sysconfdir=/etc \
+	--mandir=/usr/share/man \
+	--sbindir=/usr/bin
+  make
+}
+
+check() {
+  cd icu/source
+  make check
+}
+
+package() {
+  cd icu/source
+  make DESTDIR="${pkgdir}" install
+  rm -r "${pkgdir}/usr"/share
+
+  # keep icu-config-32
+  find "${pkgdir}/usr/bin" -type f -not -name icu-config -delete
+  mv "${pkgdir}/usr/bin"/icu-config{,-32}
+
+  # Install license
+  install -Dm644 "${srcdir}"/LICENSE "${pkgdir}"/usr/share/licenses/${pkgname}/LICENSE
+}

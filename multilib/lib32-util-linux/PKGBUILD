@@ -1,0 +1,80 @@
+# Maintainer: Dave Reisner <dreisner@archlinux.org>
+# Contributor: judd <jvinet@zeroflux.org>
+
+_pkgbasename=util-linux
+pkgname=lib32-${_pkgbasename}
+pkgver='2.41'
+pkgrel=1
+pkgdesc='Miscellaneous system utilities for Linux (32-bit)'
+url='https://github.com/util-linux/util-linux'
+arch=('x86_64')
+makedepends=('git' 'meson' 'lib32-libxcrypt' 'lib32-ncurses')
+depends=('util-linux-libs' 'lib32-glibc')
+provides=('libuuid.so' 'libblkid.so' 'libfdisk.so' 'libmount.so' 'libsmartcols.so')
+license=('GPL2')
+options=('!emptydirs')
+validpgpkeys=('B0C64D14301CC6EFAEDF60E4E4B71D5EEC39C284')  # Karel Zak
+source=("git+https://github.com/util-linux/util-linux#tag=v${pkgver/rc/-rc}?signed")
+sha256sums=('bf69afb12389883698078d47ea5ef299d34346ab1c38a885573833ae4b43e5ec')
+
+_backports=(
+)
+
+_reverts=(
+)
+
+prepare() {
+  cd "${_pkgbasename}"
+
+  local _c _l
+  for _c in "${_backports[@]}"; do
+    if [[ "${_c}" == *..* ]]; then _l='--reverse'; else _l='--max-count=1'; fi
+    git log --oneline "${_l}" "${_c}"
+    git cherry-pick --mainline 1 --no-commit "${_c}"
+  done
+  for _c in "${_reverts[@]}"; do
+    if [[ "${_c}" == *..* ]]; then _l='--reverse'; else _l='--max-count=1'; fi
+    git log --oneline "${_l}" "${_c}"
+    git revert --mainline 1 --no-commit "${_c}"
+  done
+
+  # do not mark dirty
+  sed -i '/dirty=/c dirty=' tools/git-version-gen
+}
+
+build() {
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+
+  local _meson_options=(
+    --libexecdir /usr/lib32
+    --libdir     /usr/lib32
+    --includedir=/usr/include32
+
+    --auto-features disabled
+
+    -Dbuild-libblkid=enabled
+    -Dbuild-libuuid=enabled
+    -Dbuild-libmount=enabled
+    -Dbuild-libsmartcols=enabled
+    -Dbuild-libfdisk=enabled
+
+    -Dncurses=disabled
+    -Dncursesw=enabled
+  )
+
+  arch-meson "${_pkgbasename}" build "${_meson_options[@]}"
+
+  meson compile -C build
+}
+
+package() {
+  DESTDIR="${pkgdir}" meson install -C build
+
+  rm -rf "${pkgdir}"/usr/{bin,include,share}
+}

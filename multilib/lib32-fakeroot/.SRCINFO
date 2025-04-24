@@ -1,0 +1,16 @@
+pkgbase = lib32-fakeroot
+	pkgdesc = Tool for simulating superuser privileges (32-bit)
+	pkgver = 1.37.1.1
+	pkgrel = 1
+	url = https://tracker.debian.org/pkg/fakeroot
+	install = fakeroot.install
+	arch = x86_64
+	license = GPL-3.0-or-later
+	makedepends = git
+	makedepends = po4a
+	depends = lib32-glibc
+	depends = fakeroot
+	source = git+https://salsa.debian.org/clint/fakeroot.git#tag=upstream/1.37.1.1
+	sha512sums = eaade132f843ce9a7d48f802f200e845fe68306f0ba7a5fdffa40c8d996e7162de5d361e4bc1a2e6f43e6d188c15bc683590f9e079ee7203811d3f5321853244
+
+pkgname = lib32-fakeroot

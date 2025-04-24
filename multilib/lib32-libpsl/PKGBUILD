@@ -1,0 +1,55 @@
+# Maintainer: Levente Polyak <anthraxx@archlinux.org>
+# Maintainer: Maxime Gauduin <alucryd@archlinux.org>
+
+pkgname=lib32-libpsl
+pkgver=0.21.5
+pkgrel=1
+pkgdesc='Public Suffix List library (32-bit)'
+url='https://github.com/rockdaboot/libpsl'
+arch=('x86_64')
+license=('MIT')
+depends=('libpsl' 'lib32-glibc' 'lib32-libidn2' 'lib32-libunistring')
+makedepends=('git' 'libxslt' 'meson' 'ninja' 'python' 'publicsuffix-list')
+provides=('libpsl.so')
+source=(https://github.com/rockdaboot/libpsl/releases/download/${pkgver}/libpsl-${pkgver}.tar.gz)
+sha512sums=('c14d575cecc0f1693894dd79565b6b9220084ddfa43b908a1cefe16d147cdd5ec47796eb0c2135e2f829a951abaf39d8a371ab5c1352f57b36e610e25adf91f5')
+
+prepare() {
+  cd libpsl-$pkgver
+
+  rm -frv list
+}
+
+build() {
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+
+  arch-meson libpsl-$pkgver build \
+    --libdir=/usr/lib32 \
+    --includedir=/usr/include32 \
+    -Dbuiltin=true \
+    -Druntime=libidn2 \
+    -Dpsl_file=/usr/share/publicsuffix/effective_tld_names.dat \
+    -Dpsl_distfile=/usr/share/publicsuffix/public_suffix_list.dat \
+    -Dpsl_testfile=/usr/share/publicsuffix/test_psl.txt
+  ninja -C build
+}
+
+check() {
+  ninja -C build test
+}
+
+package() {
+  DESTDIR="${pkgdir}" ninja -C build install
+  rm -rf "${pkgdir}"/usr/{bin,share}
+
+  install -dm 755 "${pkgdir}"/usr/share/licenses
+  ln -s libpsl "${pkgdir}"/usr/share/licenses/lib32-libpsl
+}
+
+# vim: ts=2 sw=2 et:

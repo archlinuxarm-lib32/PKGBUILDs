@@ -1,0 +1,129 @@
+# Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
+# Contributor: Ionut Biru <ibiru@archlinux.org>
+# Contributor: Pierre Schmitz <pierre@archlinux.de>
+# Contributor: Mikko Seppälä <t-r-a-y@mbnet.fi>
+
+pkgbase=lib32-glib2
+pkgname=(
+  lib32-glib2
+)
+pkgver=2.84.1
+pkgrel=1
+pkgdesc="Low level core library - 32-bit"
+url="https://gitlab.gnome.org/GNOME/glib"
+license=(LGPL-2.1-or-later)
+arch=(x86_64)
+depends=(
+  glib2
+  lib32-gcc-libs
+  lib32-glibc
+  lib32-libffi
+  lib32-pcre2
+  lib32-util-linux
+  lib32-zlib
+)
+makedepends=(
+  gettext
+  git
+#  lib32-dbus
+  lib32-libelf
+  meson
+  python
+  python-packaging
+  shared-mime-info
+  util-linux
+)
+checkdepends=(
+  desktop-file-utils
+  lib32-glib2
+)
+source=(
+  "git+https://gitlab.gnome.org/GNOME/glib.git?signed#tag=$pkgver"
+  "git+https://gitlab.gnome.org/GNOME/gvdb.git"
+  0001-glib-compile-schemas-Remove-noisy-deprecation-warnin.patch
+  0002-gdesktopappinfo-Add-more-known-terminals.patch
+  gio-querymodules-32.hook
+)
+b2sums=('48a3018f6423aa02c57a768a88744b7ce69299877c5241e8f4d71e1d5c50b2d3625221bda17b764b3f2254b695afb5cdbeb600f4090ee8c8c0e205b7e25e3297'
+        'SKIP'
+        '4ddbd31f5f466fce99d82890292ff922555a9ab379d22202aeea5127f58798668f871dea0485cc0f458069276ad512412285ede6c8f3e36bea899358f49e931a'
+        'bf57425e3081a8f5d36d6a54eff1bfa93ba6bab8f0a4d3f3bf1e319ebfa71d99ce6a0466166fc694f53c5bd151e9cc65339e222c48e963f0cdc075852d0e1f7c'
+        '678ea2d010fd64b6c55106510096363c54c357d65615c666e9cc3a0e280c0878257a45e646dd88f6bdd0623f7268c4afd2d4f98f82a5489bbfc028c5864252f1')
+validpgpkeys=(
+  53EF3DC3B63E2899271BD26322E8091EEA11BBB7 # Emmanuele Bassi <ebassi@gnome.org>
+  923B7025EE03C1C59F42684CF0942E894B2EAFA0 # Philip Withnall <pwithnall@gnome.org>
+)
+
+prepare() {
+  cd glib
+
+  # Drop dep on libatomic
+  # https://gitlab.archlinux.org/archlinux/packaging/packages/qemu/-/issues/6
+  git revert -n 4e6dc4dee0e1c6407113597180d9616b4f275f94
+
+  # Suppress noise from glib-compile-schemas.hook
+  git apply -3 ../0001-glib-compile-schemas-Remove-noisy-deprecation-warnin.patch
+
+  # Add ghostty and ptyxis to known terminals list
+  # This is a downstream only patch; GNOME will not add new terminal emulators.
+  # https://gitlab.gnome.org/GNOME/glib/-/issues/338#note_1076172
+  git apply -3 ../0002-gdesktopappinfo-Add-more-known-terminals.patch
+
+  git submodule init
+  git submodule set-url subprojects/gvdb "$srcdir/gvdb"
+  git -c protocol.file.allow=always -c protocol.allow=never submodule update
+}
+
+build() {
+  local meson_options=(
+    --libexecdir /usr/lib32
+    --libdir     /usr/lib32
+    --includedir=/usr/include32
+    -D documentation=false
+    -D dtrace=disabled
+    -D tests=false
+    -D glib_debug=disabled
+    -D introspection=disabled
+    -D man-pages=disabled
+    -D selinux=disabled
+    -D sysprof=disabled
+    -D systemtap=disabled
+  )
+
+  # Produce more debug info: GLib has a lot of useful macros
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+
+  # Avoid crashing some old binaries
+
+  arch-meson glib build "${meson_options[@]}"
+  meson compile -C build
+}
+
+check() {
+  meson test -C build --no-suite flaky --no-suite slow --print-errorlogs
+}
+
+package_lib32-glib2() {
+  depends+=(
+    libffi.so
+    libmount.so
+  )
+  provides+=(libg{lib,io,irepository,module,object,thread}-2.0.so)
+
+  meson install -C build --destdir "$pkgdir"
+
+  rm -r "$pkgdir"/usr/share
+  find "$pkgdir/usr/bin" -type f -not -name gio-querymodules -printf 'Removing %P\n' -delete
+  mv "$pkgdir"/usr/bin/gio-querymodules{,-32}
+
+  install -Dt "$pkgdir/usr/share/libalpm/hooks" -m644 *.hook
+  touch "$pkgdir/usr/lib32/gio/modules/.keep"
+}
+
+# vim:set sw=2 sts=-1 et:

@@ -1,0 +1,21 @@
+pkgbase = lib32-libgcrypt
+	pkgdesc = General purpose cryptographic library based on the code from GnuPG (32-bit)
+	pkgver = 1.11.0
+	pkgrel = 1
+	url = https://www.gnupg.org
+	arch = x86_64
+	license = LGPL
+	makedepends = gcc-multilib
+	makedepends = libtool-multilib
+	depends = lib32-libgpg-error
+	depends = libgcrypt
+	source = https://gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-1.11.0.tar.bz2
+	source = https://gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-1.11.0.tar.bz2.sig
+	validpgpkeys = 6DAA6E64A76D2840571B4902528897B826403ADA
+	validpgpkeys = AC8E115BF73E2D8D47FA9908E98E9B2D19C6C8BD
+	sha1sums = dd2c68e0685bb99249efeeb06046fae15b5214ba
+	sha1sums = SKIP
+	sha256sums = 09120c9867ce7f2081d6aaa1775386b98c2f2f246135761aae47d81f58685b9c
+	sha256sums = SKIP
+
+pkgname = lib32-libgcrypt

@@ -1,0 +1,22 @@
+pkgbase = lib32-libnghttp2
+	pkgdesc = Framing layer of HTTP/2 is implemented as a reusable C library (32-bit)
+	pkgver = 1.65.0
+	pkgrel = 1
+	url = https://nghttp2.org/
+	arch = x86_64
+	license = MIT
+	makedepends = git
+	depends = lib32-glibc
+	depends = libnghttp2
+	provides = libnghttp2.so
+	source = git+https://github.com/nghttp2/nghttp2.git#tag=v1.65.0?signed
+	source = git+https://github.com/ngtcp2/munit.git
+	source = git+https://github.com/mruby/mruby.git
+	source = git+https://github.com/tatsuhiro-t/neverbleed.git
+	validpgpkeys = F4F3B91474D1EB29889BD0EF7E8403D5D673C366
+	sha512sums = d82375c360ac385f47bc94eb730b99a595c3b16c3b41f51594f005e3d93edc05779660fbb7da304998507b7eeb4c9a600520e047e1d23ee591f86b62ac8cd781
+	sha512sums = SKIP
+	sha512sums = SKIP
+	sha512sums = SKIP
+
+pkgname = lib32-libnghttp2

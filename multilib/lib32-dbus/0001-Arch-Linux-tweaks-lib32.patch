@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
+Date: Tue, 17 Dec 2024 09:11:33 +0100
+Subject: [PATCH] Arch Linux tweaks (lib32)
+
+- Remove the docs completely
+---
+ meson.build | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/meson.build b/meson.build
+index 872672ddffb5..c7db47661a30 100644
+--- a/meson.build
++++ b/meson.build
+@@ -1243,7 +1243,6 @@ if tools
+     subdir('tools')
+ endif
+ subdir('test')
+-subdir('doc')
+ subdir('cmake')
+ 
+ meson.add_install_script('meson_post_install.py',

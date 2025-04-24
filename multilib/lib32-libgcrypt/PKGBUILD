@@ -1,0 +1,57 @@
+# Maintainer: Andreas Radke <andyrtr@archlinux.org>
+
+_pkgbasename=libgcrypt
+pkgname=lib32-$_pkgbasename
+pkgver=1.11.0
+pkgrel=1
+pkgdesc="General purpose cryptographic library based on the code from GnuPG (32-bit)"
+arch=(x86_64)
+url="https://www.gnupg.org"
+license=('LGPL')
+depends=('lib32-libgpg-error' $_pkgbasename)
+makedepends=(lib32-gcc libtool)
+source=(https://gnupg.org/ftp/gcrypt/${_pkgbasename}/${_pkgbasename}-${pkgver}.tar.bz2{,.sig})
+sha1sums=('dd2c68e0685bb99249efeeb06046fae15b5214ba'
+          'SKIP')
+sha256sums=('09120c9867ce7f2081d6aaa1775386b98c2f2f246135761aae47d81f58685b9c'
+            'SKIP')
+validpgpkeys=(
+  '6DAA6E64A76D2840571B4902528897B826403ADA' # Werner Koch (dist signing 2020)
+  'AC8E115BF73E2D8D47FA9908E98E9B2D19C6C8BD' # Niibe Yutaka (GnuPG Release Key)
+)
+
+prepare() {
+  cd ${_pkgbasename}-${pkgver}
+
+  # Use 32-bit assembler
+  sed 's:i\[34567\]86\*-\*-\*:x86_64-*-*:' -i mpi/config.links
+  sed 's:x86_64-\*-\*:ignore:;s:i?86-\*-\*:x86_64-*-*:' -i configure.ac
+
+  autoreconf -fi
+}
+
+build() {
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+
+  cd ${_pkgbasename}-${pkgver}
+
+  ./configure --prefix=/usr --disable-static --includedir=/usr/include32 --disable-padlock-support \
+    --target=armv7l-linux-gnueabihf \
+    --host=armv7l-linux-gnueabihf \
+    --build=armv7l-linux-gnueabihf \
+              --libdir=/usr/lib32 --enable-shared
+  make
+}
+
+package() {
+  cd ${_pkgbasename}-${pkgver}
+
+  make DESTDIR="${pkgdir}" install
+  rm -rf "${pkgdir}"/usr/{share,bin,sbin}
+}

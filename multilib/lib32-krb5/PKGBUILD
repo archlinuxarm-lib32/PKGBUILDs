@@ -1,0 +1,101 @@
+# Maintainer: Levente Polyak <anthraxx[at]archlinux[dot]org>
+# Contributor: Florian Pritz <flo@xinu.at>
+# Contributor: Stéphane Gaudreault <stephane@archlinux.org>
+
+_pkgbasename=krb5
+pkgname=lib32-${_pkgbasename}
+_pkgvermajor=1.21
+pkgver=1.21.3
+pkgrel=1
+pkgdesc='The Kerberos network authentication system (32-bit)'
+url='https://web.mit.edu/kerberos/'
+arch=('x86_64')
+license=('custom')
+depends=(
+  lib32-e2fsprogs
+  lib32-gcc-libs
+  lib32-glibc
+  lib32-keyutils
+  lib32-libldap
+  lib32-openssl
+  "${_pkgbasename}"
+)
+makedepends=(
+  perl
+)
+provides=(
+  libgssapi_krb5.so
+  libgssrpc.so
+  libk5crypto.so
+  libkadm5clnt_mit.so
+  libkadm5srv_mit.so
+  libkdb5.so
+  libkdb_ldap.so
+  libkrad.so
+  libkrb5.so
+  libkrb5support.so
+  libverto.so
+)
+options=('!emptydirs')
+source=(https://web.mit.edu/kerberos/dist/krb5/${_pkgvermajor}/${_pkgbasename}-${pkgver}.tar.gz{,.asc})
+sha512sums=('87bc06607f4d95ff604169cea22180703a42d667af05f66f1569b8bd592670c42820b335e5c279e8b4f066d1e7da20f1948a1e4def7c5d295c170cbfc7f49c71'
+            'SKIP')
+validpgpkeys=('2C732B1C0DBEF678AB3AF606A32F17FD0055C305'  # Tom Yu <tlyu@mit.edu>
+              'C4493CB739F4A89F9852CBC20CBA08575F8372DF') # Greg Hudson <ghudson@mit.edu>
+
+prepare() {
+   cd ${_pkgbasename}-${pkgver}
+
+  # FS#25384
+  sed -i "/KRB5ROOT=/s/\/local//" src/util/ac_check_krb5.m4
+}
+
+build() {
+   cd "${srcdir}/${_pkgbasename}-${pkgver}/src"
+   export CC="armv7l-linux-gnueabihf-gcc"
+   export CXX="armv7l-linux-gnueabihf-g++"
+   export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+   export LD="armv7l-linux-gnueabihf-ld"
+   export AS="armv7l-linux-gnueabihf-as"
+   CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+   CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+
+   export CFLAGS+=" -fPIC -fno-strict-aliasing -fstack-protector-all"
+   export CPPFLAGS+=" -I/usr/include32/et"
+   ./configure --prefix=/usr \
+               --sysconfdir=/etc \
+               --localstatedir=/var/lib \
+               --libdir=/usr/lib32 \
+               --target=armv7l-linux-gnueabihf \
+               --host=armv7l-linux-gnueabihf \
+               --build=armv7l-linux-gnueabihf \
+               --includedir=/usr/include32 \
+               --enable-shared \
+               --with-system-et \
+               --with-system-ss \
+               --disable-rpath \
+               --without-tcl \
+               --enable-dns-for-realm \
+               --with-ldap \
+               --without-system-verto
+   make
+}
+
+#check() {
+   # We can't do this in the build directory.
+
+   # only works if the hostname is set properly/resolves to something. whatever...
+   #cd "${srcdir}/${_pkgbasename}-${pkgver}"
+   #make -C src check
+#}
+
+package() {
+   cd ${_pkgbasename}-${pkgver}/src
+   make DESTDIR="${pkgdir}" install
+
+   rm -rf "${pkgdir}"/usr/{share,bin,sbin}
+   install -d "${pkgdir}/usr/share/licenses"
+   ln -s ${_pkgbasename} "${pkgdir}/usr/share/licenses/${pkgname}"
+}
+
+# vim: ts=2 sw=2 et:

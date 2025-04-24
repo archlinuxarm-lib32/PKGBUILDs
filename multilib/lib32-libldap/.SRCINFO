@@ -1,0 +1,18 @@
+pkgbase = lib32-libldap
+	pkgdesc = Lightweight Directory Access Protocol (LDAP) client libraries (32-bit)
+	pkgver = 2.6.9
+	pkgrel = 1
+	url = https://www.openldap.org/
+	arch = x86_64
+	license = custom
+	makedepends = gcc-multilib
+	depends = lib32-openssl
+	depends = lib32-libxcrypt
+	depends = libldap
+	source = https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-2.6.9.tgz
+	source = https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-2.6.9.tgz.asc
+	validpgpkeys = 3CE269B5398BC8B785645E987F67D5FD1CE1CBCE
+	sha256sums = 2cb7dc73e9c8340dff0d99357fbaa578abf30cc6619f0521972c555681e6b2ff
+	sha256sums = SKIP
+
+pkgname = lib32-libldap

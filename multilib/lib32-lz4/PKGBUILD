@@ -1,0 +1,55 @@
+# Maintainer: Levente Polyak <anthraxx[at]archlinux[dot]org>
+# Contributor: Sébastien Luttringer
+
+_pkgname=lz4
+pkgname=lib32-lz4
+pkgver=1.10.0
+pkgrel=3
+pkgdesc='Extremely fast compression algorithm (32-bit)'
+arch=('x86_64')
+url='https://lz4.github.io/lz4/'
+license=('GPL-2.0-or-later')
+makedepends=('git')
+checkdepends=('diffutils')
+depends=('lz4' 'lib32-glibc')
+provides=('liblz4.so')
+source=("git+https://github.com/lz4/lz4.git#tag=v$pkgver")
+sha256sums=('487f9bc24fdaf589e2f4bb23dd98b1f21a71b643db09251145616587c9468555')
+
+build() {
+  cd ${_pkgname}
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+  # do not use the main makefile, it calls sub make with -e
+  # exported CLFAGS by makepkg break the version. see FS#50071
+  make -C lib PREFIX=/usr
+  make -C programs PREFIX=/usr lz4 lz4c
+}
+
+check() {
+  rm -f passwd.lz4
+  ${_pkgname}/programs/lz4 /etc/passwd passwd.lz4
+  ${_pkgname}/programs/lz4 -d passwd.lz4 passwd
+  diff -q /etc/passwd passwd
+  rm passwd
+}
+
+package() {
+  cd ${_pkgname}
+  make install \
+    PREFIX=/usr \
+    LIBDIR=/usr/lib32 \
+    INCLUDEDIR=/usr/include32 \
+    PKGCONFIGDIR=/usr/lib32/pkgconfig \
+    DESTDIR="${pkgdir}"
+  sed -i 's/includedir=${prefix}\/include/includedir=${prefix}\/include32/' "$pkgdir"/usr/lib32/pkgconfig/*
+sed -i 's/libdir=${prefix}\/lib/libdir=${prefix}\/lib32/' "$pkgdir"/usr/lib32/pkgconfig/*
+  rm -rf "${pkgdir}"/usr/{share,bin}
+}
+
+# vim: ts=2 sw=2 et:

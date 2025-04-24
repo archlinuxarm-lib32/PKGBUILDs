@@ -1,0 +1,21 @@
+pkgbase = lib32-libgpg-error
+	pkgdesc = Support library for libgcrypt (32-bit)
+	pkgver = 1.51
+	pkgrel = 1
+	url = https://www.gnupg.org
+	arch = x86_64
+	license = LGPL-2.1-or-later
+	license = BSD-3-Clause OR LGPL-2.1-or-later
+	license = FSFULLR
+	license = GPL-2.0-or-later
+	depends = lib32-glibc
+	depends = libgpg-error
+	source = https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-1.51.tar.bz2
+	source = https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-1.51.tar.bz2.sig
+	validpgpkeys = D8692123C4065DEA5E0F3AB5249B39D24F25E3B6
+	validpgpkeys = AC8E115BF73E2D8D47FA9908E98E9B2D19C6C8BD
+	validpgpkeys = 6DAA6E64A76D2840571B4902528897B826403ADA
+	sha256sums = be0f1b2db6b93eed55369cdf79f19f72750c8c7c39fc20b577e724545427e6b2
+	sha256sums = SKIP
+
+pkgname = lib32-libgpg-error

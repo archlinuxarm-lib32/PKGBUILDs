@@ -61,7 +61,8 @@ package_lib32-zlib() {
   depends=(lib32-glibc)
 
   make install DESTDIR="$pkgdir" -C $pkgbase-$pkgver
-  rm -rf "$pkgdir"/usr/share/man
+  rm -rf "$pkgdir"/usr/share/mano
+  sed -i 's/includedir=${prefix}\/include/includedir=${prefix}\/include32/' "$pkgdir"/usr/lib32/pkgconfig/*
   install -D -m644 $pkgbase-$pkgver/LICENSE -t "$pkgdir/usr/share/licenses/$pkgname/"
 }
 
@@ -77,6 +78,7 @@ package_lib32-minizip() {
   install -D -m644 $pkgbase-$pkgver/LICENSE -t "$pkgdir/usr/share/licenses/$pkgname/"
 
   # https://github.com/madler/zlib/pull/229
+  sed -i 's/includedir=${prefix}\/include/includedir=${prefix}\/include32/' "$pkgdir"/usr/lib32/pkgconfig/*
   rm "$pkgdir/usr/include32/minizip/crypt.h"
 }
 

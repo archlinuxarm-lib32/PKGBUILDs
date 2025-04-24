@@ -1,0 +1,93 @@
+# Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
+# Contributor: Ionut Biru <ibiru@archlinux.org>
+
+pkgbase=lib32-dbus
+pkgname=(
+  lib32-dbus
+)
+pkgver=1.16.2
+pkgrel=1
+pkgdesc="Freedesktop.org message bus system - 32-bit"
+url="https://www.freedesktop.org/wiki/Software/dbus/"
+arch=(x86_64)
+license=("AFL-2.1 OR GPL-2.0-or-later")
+depends=(
+  dbus
+  lib32-glibc
+  lib32-systemd
+)
+makedepends=(
+  git
+  lib32-glib2
+  meson
+  python
+  systemd
+)
+source=(
+  "git+https://gitlab.freedesktop.org/dbus/dbus.git?signed#tag=dbus-$pkgver"
+  0001-Arch-Linux-tweaks-lib32.patch
+)
+b2sums=('669cd4203fbac908db3a20c5b51355d9e84b68c9cc94f8de52e35544a636c6d5d1df8ee2bbdfd6dead53a6bd9865db547aa4af0e913bac697b138c698840d3ce'
+        '709c45086f60fe0cfb153d4dad585a71ac0dbbb6b3d16c0e3a35bd0cfc9b835511309c62cb35f03cebfc6831661fd5cf9bbdf86b0b14ab92065a00f3317299fe')
+validpgpkeys=(
+  DA98F25C0871C49A59EAFF2C4DE8FF2A63C7CC90  # Simon McVittie <simon.mcvittie@collabora.co.uk>
+)
+
+prepare() {
+  cd dbus
+  patch -Np1 -i ../0001-Arch-Linux-tweaks-lib32.patch
+}
+
+build() {
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+  local meson_options=(
+    --includedir=include32
+    --libdir=lib32
+    -D apparmor=disabled
+    -D dbus_user=dbus
+    -D doxygen_docs=disabled
+    -D ducktype_docs=disabled
+    -D kqueue=disabled
+    -D launchd=disabled
+    -D libaudit=disabled
+    -D message_bus=false
+    -D qt_help=disabled
+    -D relocation=disabled
+    -D selinux=disabled
+    -D tools=false
+    -D x11_autolaunch=disabled
+    -D xml_docs=disabled
+  )
+
+  arch-meson dbus build "${meson_options[@]}"
+  meson compile -C build
+}
+
+check() {
+  meson test -C build --print-errorlogs
+}
+
+package_lib32-dbus() {
+  depends+=(
+    libsystemd.so
+  )
+  provides=(
+    lib32-libdbus
+    libdbus-1.so
+  )
+  conflicts=(lib32-libdbus)
+  replaces=(lib32-libdbus)
+
+  meson install -C build --destdir "$pkgdir"
+
+  mkdir -p "$pkgdir/usr/share/licenses"
+  ln -s dbus "$pkgdir/usr/share/licenses/$pkgname"
+}
+
+# vim:set sw=2 sts=-1 et:

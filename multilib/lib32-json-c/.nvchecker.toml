@@ -1,0 +1,6 @@
+[lib32-json-c]
+source = "github"
+github = "json-c/json-c"
+use_max_tag = true
+from_pattern = '^json-c-(.+)-\d+$'
+to_pattern = '\1'

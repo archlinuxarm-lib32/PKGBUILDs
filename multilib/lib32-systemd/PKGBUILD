@@ -1,0 +1,181 @@
+# Maintainer: Christian Hesse <mail@eworm.de>
+
+pkgname=lib32-systemd
+_pkgbasename=systemd
+# Upstream versioning is incompatible with pacman's version comparisons, one
+# way or another. We use proper version for pacman here (no dash for rc
+# release!), and change in source array below.
+pkgver='257.5'
+pkgrel=1
+pkgdesc='system and service manager (32-bit)'
+arch=('x86_64')
+url='https://www.github.com/systemd/systemd'
+license=('LGPL-2.1-or-later')
+depends=('systemd-libs' 'lib32-gcc-libs' 'lib32-libcap' 'lib32-libgcrypt'
+         'lib32-libxcrypt' 'lib32-xz' 'lib32-zstd')
+makedepends=('git' 'gperf' 'intltool' 'lib32-acl' 'lib32-bzip2'
+             'lib32-curl' 'lib32-dbus' 'lib32-gcc-libs' 'lib32-glib2'
+             'lib32-gnutls' 'lib32-libelf' 'lib32-libidn2' 'lib32-pcre2'
+             'libxslt' 'meson' 'python-jinja')
+checkdepends=('systemd')
+provides=('libsystemd.so' 'libudev.so')
+validpgpkeys=('63CDA1E5D3FC22B998D20DD6327F26951A015CC4'  # Lennart Poettering <lennart@poettering.net>
+              'A9EA9081724FFAE0484C35A1A81CEA22BC8C7E2E'  # Luca Boccassi <luca.boccassi@gmail.com>
+              '9A774DB5DB996C154EBBFBFDA0099A18E29326E1'  # Yu Watanabe <watanabe.yu+github@gmail.com>
+              '5C251B5FC54EB2F80F407AAAC54CA336CFEB557E') # Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl>
+# For pacman's version comparisons $pkgver is missing the dash that would be
+# in an upstream rc version so add it back when fetching the tag from github.
+source=("git+https://github.com/systemd/systemd#tag=v${pkgver/rc/-rc}?signed")
+sha512sums=('41b3a09f710a7801cec2d89a245c7ac06977aa91e133b72464179ab74c682f0a10320483ea48ebe774e0dc8d57bc453198cf91915d74ceda672379a4c06e77f8')
+
+_backports=(
+)
+
+_reverts=(
+)
+
+prepare() {
+  cd "${_pkgbasename}"
+
+  local _c _l
+  for _c in "${_backports[@]}"; do
+    if [[ "${_c}" == *..* ]]; then _l='--reverse'; else _l='--max-count=1'; fi
+    git log --oneline "${_l}" "${_c}"
+    git cherry-pick --mainline 1 --no-commit "${_c}"
+  done
+  for _c in "${_reverts[@]}"; do
+    if [[ "${_c}" == *..* ]]; then _l='--reverse'; else _l='--max-count=1'; fi
+    git log --oneline "${_l}" "${_c}"
+    git revert --mainline 1 --no-commit "${_c}"
+  done
+}
+
+build() {
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+  local _timeservers=({0..3}.arch.pool.ntp.org)
+  local _nameservers=(
+    # We use these public name services, ordered by their privacy policy (hopefully):
+    #  * Cloudflare (https://1.1.1.1/)
+    #  * Quad9 (https://www.quad9.net/)
+    #  * Google (https://developers.google.com/speed/public-dns/)
+    '1.1.1.1#cloudflare-dns.com'
+    '9.9.9.9#dns.quad9.net'
+    '8.8.8.8#dns.google'
+    '2606:4700:4700::1111#cloudflare-dns.com'
+    '2620:fe::9#dns.quad9.net'
+    '2001:4860:4860::8888#dns.google'
+  )
+ 
+  local _meson_options=(
+    --libexecdir	/usr/lib32
+    --includedir /usr/include32
+    --libdir		/usr/lib32
+
+    -Dversion-tag="${_meson_version}-arch"
+    -Dvcs-tag=false
+    -Dshared-lib-tag="${_meson_version}"
+    -Dmode=release
+
+    # components & features
+    -Dapparmor=disabled
+    -Daudit=disabled
+    -Dbacklight=false
+    -Dbinfmt=false
+    -Dblkid=disabled
+    -Dbootloader=disabled
+    -Dbpf-framework=disabled
+    -Dcoredump=false
+    -Dcreate-log-dirs=false
+    -Defi=false
+    -Denvironment-d=false
+    -Dfirstboot=false
+    -Dhibernate=false
+    -Dhomed=disabled
+    -Dhostnamed=false
+    -Dhtml=disabled
+    -Dhwdb=false
+    -Dima=false
+    -Dimportd=disabled
+    -Dkmod=disabled
+    -Dldconfig=false
+    -Dlibarchive=disabled
+    -Dlibcryptsetup=disabled
+    -Dlibcryptsetup-plugins=disabled
+    -Dlibfido2=disabled
+    -Dlibidn2=enabled
+    -Dlibiptc=disabled
+    -Dlocaled=false
+    -Dlogind=false
+    -Dlz4=disabled
+    -Dmachined=true
+    -Dman=disabled
+    -Dmicrohttpd=disabled
+    -Dnetworkd=false
+    -Dnss-myhostname=true
+    -Dnss-mymachines=enabled
+    -Dnss-resolve=enabled
+    -Dnss-systemd=true
+    -Doomd=false
+    -Dpam=disabled
+    -Dpasswdqc=disabled
+    -Dportabled=false
+    -Dpstore=false
+    -Dpwquality=disabled
+    -Dqrencode=disabled
+    -Dquotacheck=false
+    -Drandomseed=false
+    -Dremote=disabled
+    -Drepart=disabled
+    -Dresolve=true
+    -Drfkill=false
+    -Dseccomp=disabled
+    -Dselinux=disabled
+    -Dsysext=false
+    -Dsysusers=false
+    -Dtimedated=false
+    -Dtimesyncd=false
+    -Dtmpfiles=false
+    -Dtpm2=disabled
+    -Dtpm=false
+    -Dtranslations=false
+    -Dukify=disabled
+    -Duserdb=false
+    -Dutmp=false
+    -Dvconsole=false
+    -Dxdg-autostart=false
+    -Dxenctrl=disabled
+    -Dxkbcommon=disabled
+
+    -Ddbuspolicydir=/usr/share/dbus-1/system.d
+    -Ddefault-kill-user-processes=false
+    -Ddefault-locale='C.UTF-8'
+    -Dfallback-hostname='archlinux'
+    -Dnologin-path=/usr/bin/nologin
+    -Dntp-servers="${_timeservers[*]}"
+    -Ddns-servers="${_nameservers[*]}"
+    -Drpmmacrosdir=no
+    -Dsysvinit-path=
+    -Dsysvrcnd-path=
+  )
+
+  arch-meson "${_pkgbasename}" build "${_meson_options[@]}"
+
+  meson compile -C build
+}
+
+check() {
+  meson test -C build --print-errorlogs
+}
+
+package() {
+  meson install -C build --no-rebuild --destdir "$pkgdir"
+
+  rm -rf "${pkgdir}"/{etc,var}
+  rm -rf "${pkgdir}"/usr/{bin,lib,lib32/systemd,share}
+}
