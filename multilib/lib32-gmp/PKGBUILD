@@ -29,6 +29,9 @@ build() {
   ./configure \
     --prefix=/usr \
     --libexecdir=/usr/lib32 \
+    --target=armv7l-linux-gnueabihf \
+    --host=armv7l-linux-gnueabihf \
+    --build=armv7l-linux-gnueabihf \
     --enable-fat --enable-cxx --libdir=/usr/lib32 \
     --includedir=/usr/include32
 
