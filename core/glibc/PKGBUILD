@@ -227,6 +227,8 @@ package_lib32-glibc() {
 
   # Symlink /usr/lib32/locale to /usr/lib/locale
   ln -s ../lib/locale "${pkgdir}"/usr/lib32/locale
+  install -Dm644 "${srcdir}"/sdt.h "${pkgdir}"/usr/include32/sys/sdt.h
+  install -Dm644 "${srcdir}"/sdt-config.h "${pkgdir}"/usr/include32/sys/sdt-config.h
 }
 
 
