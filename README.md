@@ -1,6 +1,17 @@
 # ArchLinux ARM lib32 repo
 This is a repo of lib32 multilib packages for ArchLinux ARM.
 
+## Usage
+Add the repo `archarm-lib32` and `archarm-lib32-debug`(Optional) to /etc/pacman.conf
+```
+[archarm-lib32]
+Server = https://repo.fishinix.org/$repo
+
+[archarm-lib32-debug]
+Server = https://repo.fishinix.org/$repo
+```
+The gpg public key is at https://repo.fishinix.org/fish4terrisa.gpg
+
 ## Why it exists?
 Well though many people claimed that armv7l to aarch64 are not like i386 to amd64, for end users they're very similiar. You can run armv7l bianries on aarch64 platforms(except for some ARMv9 platforms), and why not?
 
