@@ -2,7 +2,6 @@
 # Maintainer: Levente Polyak <anthraxx@archlinux.org>
 # Contributor: Pierre Schmitz <pierre@archlinux.de>
 
-pkgbase=zlib
 pkgname=(lib32-zlib lib32-minizip)
 epoch=1
 pkgver=1.3.1
@@ -22,7 +21,7 @@ b2sums=('42d109223801a493de6d52e7343403d7fc3234a6ca816425fe41ac9c18019b01b93841a
         )
 
 prepare() {
-  cd $pkgbase-$pkgver/contrib/minizip
+  cd zlib-$pkgver/contrib/minizip
   cp Makefile Makefile.orig
   cp ../README.contrib readme.txt
   autoreconf -fiv
@@ -36,7 +35,7 @@ build() {
   export LD="armv7l-linux-gnueabihf-ld"
   export AS="armv7l-linux-gnueabihf-as"
   CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
-  cd $pkgbase-$pkgver
+  cd zlib-$pkgver
 
   CFLAGS+=" -ffat-lto-objects"
   ./configure --prefix=/usr \
@@ -52,18 +51,18 @@ build() {
 }
 
 check() {
-  make test -C $pkgbase-$pkgver
+  make test -C zlib-$pkgver
 
-  make -f Makefile.orig test -C $pkgbase-$pkgver/contrib/minizip
+  make -f Makefile.orig test -C zlib-$pkgver/contrib/minizip
 }
 
 package_lib32-zlib() {
   depends=(lib32-glibc)
 
-  make install DESTDIR="$pkgdir" -C $pkgbase-$pkgver
+  make install DESTDIR="$pkgdir" -C zlib-$pkgver
   rm -rf "$pkgdir"/usr/share/mano
   sed -i 's/includedir=${prefix}\/include/includedir=${prefix}\/include32/' "$pkgdir"/usr/lib32/pkgconfig/*
-  install -D -m644 $pkgbase-$pkgver/LICENSE -t "$pkgdir/usr/share/licenses/$pkgname/"
+  install -D -m644 zlib-$pkgver/LICENSE -t "$pkgdir/usr/share/licenses/$pkgname/"
 }
 
 package_lib32-minizip() {
@@ -73,9 +72,9 @@ package_lib32-minizip() {
     lib32-zlib
   )
 
-  make install DESTDIR="$pkgdir" -C $pkgbase-$pkgver/contrib/minizip
+  make install DESTDIR="$pkgdir" -C zlib-$pkgver/contrib/minizip
   rm -rf "$pkgdir"/usr/share/man
-  install -D -m644 $pkgbase-$pkgver/LICENSE -t "$pkgdir/usr/share/licenses/$pkgname/"
+  install -D -m644 zlib-$pkgver/LICENSE -t "$pkgdir/usr/share/licenses/$pkgname/"
 
   # https://github.com/madler/zlib/pull/229
   sed -i 's/includedir=${prefix}\/include/includedir=${prefix}\/include32/' "$pkgdir"/usr/lib32/pkgconfig/*
