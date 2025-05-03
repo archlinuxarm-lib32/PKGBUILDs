@@ -1,0 +1,51 @@
+# Maintainer: Jan de Groot <jgc@archlinux.org>
+
+pkgname=lib32-libx11
+pkgver=1.8.12
+pkgrel=1
+pkgdesc="X11 client-side library (32-bit)"
+arch=(x86_64)
+url="https://gitlab.freedesktop.org/xorg/lib/libx11"
+depends=('lib32-libxcb' 'libx11')
+makedepends=('xorg-util-macros' 'lib32-xorgproto' 'lib32-xtrans' 'lib32-gcc')
+license=('MIT AND X11')
+source=(https://xorg.freedesktop.org/releases/individual/lib/libX11-${pkgver}.tar.xz{,.sig})
+sha512sums=('cb7a284d9081a8b67f7d8568d56dc403a4b787e46ac497b07768d236084c01f80f4ea2ebd814f950ac9738adc3baea3912932fc333858195c4f8217744b6f730'
+            'SKIP')
+validpgpkeys=('4A193C06D35E7C670FA4EF0BA2FB9E081F2D130E') # Alan Coopersmith <alanc@freedesktop.org>
+
+build() {
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+
+  cd libX11-${pkgver}
+  ./configure --prefix=/usr --disable-static --includedir=/usr/include32 --disable-xf86bigfont --disable-thread-safety-constructor \
+    --target=armv7l-linux-gnueabihf \
+    --host=armv7l-linux-gnueabihf \
+    --build=armv7l-linux-gnueabihf \
+    --includedir=/usr/include32 \
+    --libdir=/usr/lib32 --disable-specs
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+  make
+}
+
+check() {
+  cd libX11-${pkgver}
+
+  make check
+}
+
+package() {
+  cd libX11-${pkgver}
+  make DESTDIR="${pkgdir}" install
+
+  rm -rf "${pkgdir}"/usr/share
+
+  install -d -m755 "${pkgdir}/usr/share/licenses/${pkgname}"
+  install -m644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/"
+}

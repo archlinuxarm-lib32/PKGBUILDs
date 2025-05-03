@@ -1,0 +1,47 @@
+# Contributor: Jan de Groot <jgc@archlinux.org>
+
+_pkgbasename=libxdmcp
+pkgname=lib32-$_pkgbasename
+pkgver=1.1.5
+pkgrel=1
+pkgdesc="X11 Display Manager Control Protocol library (32-bit)"
+arch=(x86_64)
+url="https://xorg.freedesktop.org/"
+license=('custom')
+depends=('lib32-glibc' $_pkgbasename)
+makedepends=('xorg-util-macros' 'lib32-xorgproto')
+provides=('libXdmcp.so')
+source=(${url}/releases/individual/lib/libXdmcp-${pkgver}.tar.xz{,.sig})
+sha512sums=('d7a1d70a58b7d34ddd01a91d3ccbc086a36626b7081cfcbb150d24288c6adad612b042ba7ea63a218595afb2ee04384c0f8ba84ee3c6bd29913724b54e898d83'
+            'SKIP')
+validpgpkeys=('4A193C06D35E7C670FA4EF0BA2FB9E081F2D130E') # Alan Coopersmith <alan.coopersmith@oracle.com>
+
+build() {
+  cd libXdmcp-${pkgver}
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+
+  ./configure --prefix=/usr --sysconfdir=/etc --disable-static \
+              --target=armv7l-linux-gnueabihf \
+              --host=armv7l-linux-gnueabihf \
+              --build=armv7l-linux-gnueabihf \
+              --includedir=/usr/include32 \
+              --libdir=/usr/lib32
+  make
+}
+
+package() {
+  cd libXdmcp-${pkgver}
+
+  make DESTDIR="${pkgdir}" install
+
+  rm -rf "${pkgdir}"/usr/share
+
+  mkdir -p "$pkgdir/usr/share/licenses"
+  ln -s $_pkgbasename "$pkgdir/usr/share/licenses/$pkgname" 
+}

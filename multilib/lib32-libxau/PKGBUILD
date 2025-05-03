@@ -1,0 +1,48 @@
+# Maintainer: Alexander Baldeck <alexander@archlinux.org>
+# Contributor: Jan de Groot <jgc@archlinux.org>
+
+_pkgbasename=libxau
+pkgname=lib32-$_pkgbasename
+pkgver=1.0.11
+pkgrel=2
+pkgdesc="X11 authorisation library (32-bit)"
+arch=(x86_64)
+url="https://xorg.freedesktop.org/"
+license=('custom')
+depends=('lib32-glibc' $_pkgbasename)
+makedepends=('pkgconf' 'lib32-xorgproto')
+provides=('libXau.so')
+source=(${url}/releases/individual/lib/libXau-${pkgver}.tar.xz)
+sha1sums=('0cf6d853fce4dc72d61c253d096408a313f1163b')
+sha256sums=('f3fa3282f5570c3f6bd620244438dbfbdd580fc80f02f549587a0f8ab329bbeb')
+
+build() {
+  cd "${srcdir}/libXau-${pkgver}"
+
+  export CC="armv7l-linux-gnueabihf-gcc"
+  export CXX="armv7l-linux-gnueabihf-g++"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  export LD="armv7l-linux-gnueabihf-ld"
+  export AS="armv7l-linux-gnueabihf-as"
+  CFLAGS=${CFLAGS/-mno-omit-leaf-frame-pointer/}
+  CXXFLAGS=${CXXFLAGS/-mno-omit-leaf-frame-pointer/}
+
+  ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib32 \
+    --libexecdir=/usr/lib32 \
+    --target=armv7l-linux-gnueabihf \
+    --host=armv7l-linux-gnueabihf \
+    --build=armv7l-linux-gnueabihf \
+    --includedir=/usr/include32
+  make
+}
+
+package() {
+  cd "${srcdir}/libXau-${pkgver}"
+
+  make DESTDIR="${pkgdir}" install
+
+  rm -rf "${pkgdir}"/usr/share
+
+  mkdir -p "$pkgdir/usr/share/licenses"
+  ln -s $_pkgbasename "$pkgdir/usr/share/licenses/$pkgname"
+}
